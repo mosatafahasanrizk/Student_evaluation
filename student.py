@@ -60,11 +60,16 @@ def generate_simple_pdf(title, content_list):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=title, ln=True, align='C')
+    # نغير العنوان ليكون بالإنجليزية فقط لتجنب الخطأ
+    pdf.cell(200, 10, txt="Report Document", ln=True, align='C') 
     pdf.ln(10)
+    
+    # نستخدم خطاً بسيطاً للبيانات (يجب أن تكون المحتويات إنجليزية أو أرقام)
     for line in content_list:
-        pdf.cell(200, 10, txt=str(line), ln=True)
-    return pdf.output(dest='S').encode('latin-1', errors='ignore')
+        # هنا نتأكد أننا لا نمرر حروفاً عربية للمكتبة الافتراضية
+        clean_line = str(line).encode('latin-1', 'replace').decode('latin-1')
+        pdf.cell(200, 10, txt=clean_line, ln=True)
+    return pdf.output(dest='S')
 
 # --- نظام تسجيل الدخول وإدارة الجلسة ---
 if 'user_role' not in st.session_state:
@@ -88,27 +93,29 @@ if st.session_state.user_role is None:
             else:
                 st.error("بيانات المالك غير صحيحة!")
                 
-        elif role == "معلم&" or role == "معلمة":
+                elif role == "معلم&" or role == "معلمة":
             df_teachers = fetch_data("Teachers")
-            if not df_teachers.empty and username in df_teachers['Teacher_ID'].values.astype(str):
-                user_row = df_teachers[df_teachers['Teacher_ID'].astype(str) == username].iloc[0]
+            # التعديل هنا: البحث في عمود 'Name' بدلاً من 'Teacher_ID'
+            if not df_teachers.empty and username in df_teachers['Name'].values:
+                user_row = df_teachers[df_teachers['Name'] == username].iloc[0]
                 if str(user_row['Password']) == password:
                     st.session_state.user_role = "teacher"
-                    st.session_state.user_id = username
+                    st.session_state.user_id = user_row['Teacher_ID'] # سنحتفظ بالكود داخلياً للربط
                     st.session_state.user_name = user_row['Name']
                     st.rerun()
-            st.error("كود المعلمة أو كلمة المرور خاطئة!")
+            st.error("اسم المعلمة أو كلمة المرور خاطئة!")
             
-        elif role == "طالبة":
+               elif role == "طالبة":
             df_students = fetch_data("Students")
-            if not df_students.empty and username in df_students['Student_ID'].values.astype(str):
-                user_row = df_students[df_students['Student_ID'].astype(str) == username].iloc[0]
+            # التعديل هنا: البحث في عمود 'Name' بدلاً من 'Student_ID'
+            if not df_students.empty and username in df_students['Name'].values:
+                user_row = df_students[df_students['Name'] == username].iloc[0]
                 if str(user_row['Password']) == password:
                     st.session_state.user_role = "student"
-                    st.session_state.user_id = username
+                    st.session_state.user_id = user_row['Student_ID'] # سنحتفظ بالكود داخلياً للربط
                     st.session_state.user_name = user_row['Name']
                     st.rerun()
-            st.error("كود الطالبة أو كلمة المرور خاطئة!")
+            st.error("اسم الطالبة أو كلمة المرور خاطئة!")
 
 else:
     # زر تسجيل الخروج في شريط جانبي
