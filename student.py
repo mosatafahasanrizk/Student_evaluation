@@ -62,7 +62,9 @@ if st.session_state.user_role is None:
         # منطق الدخول (تم التعديل للبحث بالاسم)
         if role == "المالك":
             if username == "admin" and password == "123":
-                st.session_state.user_role = "owner"; st.rerun()
+                st.session_state.user_role = "owner"
+                st.session_state.user_name = "الإدارة العامة"  # <--- هذا السطر كان ناقصاً
+                st.rerun()
         else:
             sheet = "Teachers" if role == "معلمة" else "Students"
             df = fetch_data(sheet)
@@ -85,4 +87,7 @@ else:
     if st.sidebar.button("تسجيل الخروج"):
         st.session_state.user_role = None
         st.rerun()
-    st.write(f"مرحباً {st.session_state.user_name}")
+    # بدلاً من st.write(f"مرحباً {st.session_state.user_name}")
+    # استخدمي هذا السطر الآمن:
+    user_display_name = st.session_state.get('user_name', 'زائر')
+    st.write(f"مرحباً {user_display_name}")
