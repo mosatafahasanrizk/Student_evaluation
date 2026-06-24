@@ -9,7 +9,7 @@ import os
 st.set_page_config(page_title="مشروع تحفيظ القرآن الكريم للأخوات", page_icon="🕌", layout="wide")
 
 # ضعي رابط الـ Web App الخاص بك هنا
-WEB_APP_URL = "https://script.google.com/macros/s/..../exec"
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbynIig3HruBqX7j-DpbTqBcq9cIPJUONIf8eVg__xDQV1dHUTxN_QNl08hUw5OSlb4/exec"
 
 # دالات الاتصال
 def fetch_data(sheet_name):
