@@ -104,8 +104,48 @@ else:
             st.dataframe(df)
 
     elif st.session_state.user_role == "معلمة":
-        st.title(f"👩‍🏫 أهلاً بكِ {st.session_state.user_name}")
-        st.write("هنا تظهر أدوات المعلمة (رصد، تقارير..)")
+        st.title(f"👩‍🏫 لوحة تحكم المعلمة: {st.session_state.user_name}")
+        
+        # جلب قائمة الطالبات
+        df_all_students = fetch_data("Students")
+        my_students = pd.DataFrame()
+        if not df_all_students.empty and 'Teacher_ID' in df_all_students.columns:
+            # فلترة الطالبات التابعات لهذه المعلمة فقط
+            my_students = df_all_students[df_all_students['Teacher_ID'].astype(str) == str(st.session_state.user_id)]
+
+        tab1, tab2, tab3 = st.tabs(["📝 رصد يوميات الطالبات", "➕ تسجيل طالبة جديدة", "📊 تقارير طالباتي"])
+        
+        with tab1:
+            st.subheader("رصد الحضور والدرجات")
+            if not my_students.empty:
+                student_choice = st.selectbox("اختر الطالبة:", my_students['Name'].values)
+                student_id = my_students[my_students['Name'] == student_choice]['Student_ID'].values[0]
+                status = st.radio("حالة الحضور:", ["حاضرة", "غائبة"])
+                grade = st.slider("الدرجة (من 10):", 0, 10, 10)
+                notes = st.text_input("ملاحظات:")
+                if st.button("حفظ الرصد"):
+                    if insert_data("Attendance_Grades", [str(student_id), datetime.now().strftime("%Y-%m-%d"), status, grade, notes]):
+                        st.success("تم الحفظ!")
+            else:
+                st.info("لا توجد طالبات مسجلات في ملفك.")
+
+        with tab2:
+            st.subheader("تسجيل طالبة جديدة")
+            s_name = st.text_input("اسم الطالبة:")
+            s_pass = st.text_input("كلمة مرور الطالبة:", type="password")
+            s_halaqa = st.text_input("اسم الحلقة:")
+            if st.button("تسجيل"):
+                if insert_data("Students", ["STU-"+str(datetime.now().microsecond), s_name, s_pass, s_halaqa, str(st.session_state.user_id)]):
+                    st.success("تم تسجيل الطالبة بنجاح!")
+
+        with tab3:
+            st.subheader("استخراج تقارير")
+            if not my_students.empty:
+                st.dataframe(my_students[['Student_ID', 'Name', 'Halaqa']])
+                if st.button("تحميل تقرير طالباتي (PDF)"):
+                    lines = [f"Name: {row['Name']} | ID: {row['Student_ID']}" for _, row in my_students.iterrows()]
+                    pdf_data = generate_pdf("تقرير طالبات الحلقة", lines)
+                    st.download_button("تنزيل الملف", pdf_data, "report.pdf", "application/pdf")
 
     elif st.session_state.user_role == "طالبة":
         st.title(f"🌸 ملفكِ القرآني {st.session_state.user_name}")
